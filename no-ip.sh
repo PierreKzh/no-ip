@@ -1,4 +1,5 @@
 #!/bin/bash
+
 USER=""
 PASSWORD=""
 HOSTNAME=""
@@ -8,84 +9,91 @@ IP=""
 RESULT=""
 INTERVAL=0
 CONFIG=""
+MAIL_DEST=""
 DEBUG="${DEBUG:-0}"
 
 if [[ "${DEBUG}" == "1" ]]; then
-	set -x
+        set -x
 fi
 
 if [ -f "/etc/no-ip/no-ip.conf" ]
 then
-	CONFIG="/etc/no-ip/no-ip.conf"
+        CONFIG="/etc/no-ip/no-ip.conf"
 fi
 
 for i in "$@"
 do
-	case $i in
-		-u=*|--user=*)
-		USER="${i#*=}"
-		;;
-		-p=*|--password=*)
-		PASSWORD="${i#*=}"
-		;;
-		-l=*|--logfile=*)
-		LOGFILE="${i#*=}"
-		;;
-		-h=*|--hostname=*)
-		HOSTNAME="${i#*=}"
-		;;
-		-d=*|--detectip=*)
-		DETECTIP="${i#*=}"
-		;;
-		-i=*|--ip=*)
-		IP="${i#*=}"
-		;;
-		-n=*|--interval=*)
-		INTERVAL="${i#*=}"
-		;;
-		-c=*|--config=*)
-		CONFIG="${i#*=}"
-		;;
-		*)
-		;;
-	esac
+        case "$i" in
+                -u=*|--user=*)
+                USER="${i#*=}"
+                ;;
+                -p=*|--password=*)
+                PASSWORD="${i#*=}"
+                ;;
+                -l=*|--logfile=*)
+                LOGFILE="${i#*=}"
+                ;;
+                -h=*|--hostname=*)
+                HOSTNAME="${i#*=}"
+                ;;
+                -d=*|--detectip=*)
+                DETECTIP="${i#*=}"
+                ;;
+                -i=*|--ip=*)
+                IP="${i#*=}"
+                ;;
+                -n=*|--interval=*)
+                INTERVAL="${i#*=}"
+                ;;
+                -c=*|--config=*)
+                CONFIG="${i#*=}"
+                ;;
+                -m=*|--mail_dest=*)
+                MAIL_DEST="${i#*=}"
+                ;;
+                *)
+                ;;
+        esac
 done
 
 
 if [ -n "$CONFIG" ] && [ -f "$CONFIG" ]
 then
-	while read line
-	do
-		echo $line
-		case $line in
-			user=*)
-			USER="${line#*=}"
-			;;
-			password=*)
-			PASSWORD="${line#*=}"
-			;;
-			logfile=*)
-			LOGFILE="${line#*=}"
-			;;
-			hostname=*)
-			HOSTNAME="${line#*=}"
-			;;
-			detectip=*)
-			DETECTIP="${line#*=}"
-			;;
-			ip=*)
-			IP="${line#*=}"
-			;;
-			interval=*)
-			INTERVAL="${line#*=}"
-			;;
-			*)
-			;;
-		esac
-	done < "$CONFIG"
+        while read line
+        do
+                echo "$line"
+                case "$line" in
+                        user=*)
+                        USER="${line#*=}"
+                        ;;
+                        password=*)
+                        PASSWORD="${line#*=}"
+                        ;;
+                        logfile=*)
+                        LOGFILE="${line#*=}"
+                        ;;
+                        hostname=*)
+                        HOSTNAME="${line#*=}"
+                        ;;
+                        detectip=*)
+                        DETECTIP="${line#*=}"
+                        ;;
+                        ip=*)
+                        IP="${line#*=}"
+                        ;;
+                        interval=*)
+                        INTERVAL="${line#*=}"
+                        ;;
+                        mail_dest=*)
+                        MAIL_DEST="${line#*=}"
+                        ;;
+                        *)
+                        ;;
+                esac
+        done < "$CONFIG"
 else
-	echo "Config file not found."
-	exit 10
+        echo "Config file not found."
+        exit 10
 fi
 
 
@@ -93,40 +101,40 @@ echo "$USER"
 
 if [ -z "$USER" ]
 then
-	echo "No user was set. Use -u=username"
-	exit 10
+        echo "No user was set. Use -u=username"
+        exit 10
 fi
 
 if [ -z "$PASSWORD" ]
 then
-	echo "No password was set. Use -p=password"
-	exit 20
+        echo "No password was set. Use -p=password"
+        exit 20
 fi
 
 
 if [ -z "$HOSTNAME" ]
 then
-	echo "No host name. Use -h=host.example.com"
-	exit 30
+        echo "No host name. Use -h=host.example.com"
+        exit 30
 fi
 
 
 if [ -n "$DETECTIP" ]
 then
-	IP=$(wget -qO- "http://myexternalip.com/raw")
+        IP=$(wget -qO- "http://myexternalip.com/raw")
 fi
 
 
-if [ -n "$DETECTIP" ] && [ -z $IP ]
+if [ -n "$DETECTIP" ] && [ -z "$IP" ]
 then
-	RESULT="Could not detect external IP."
+        RESULT="Could not detect external IP."
 fi
 
 
-if [[ $INTERVAL != [0-9]* ]]
+if [[ "$INTERVAL" != [0-9]* ]]
 then
-	echo "Interval is not an integer."
-	exit 35
+        echo "Interval is not an integer."
+        exit 35
 fi
 
 
@@ -137,81 +145,61 @@ NOIPURL="https://dynupdate.no-ip.com/nic/update"
 
 if [ -n "$IP" ] || [ -n "$HOSTNAME" ]
 then
-	NOIPURL="$NOIPURL?"
+        NOIPURL="$NOIPURL?"
 fi
 
 if [ -n "$HOSTNAME" ]
 then
-	NOIPURL="${NOIPURL}hostname=${HOSTNAME}"
+        NOIPURL="${NOIPURL}hostname=${HOSTNAME}"
 fi
 
 if [ -n "$IP" ]
 then
-	if [ -n "$HOSTNAME" ]
-	then
-		NOIPURL="$NOIPURL&"
-	fi
-	NOIPURL="${NOIPURL}myip=$IP"
+        if [ -n "$HOSTNAME" ]
+        then
+                NOIPURL="$NOIPURL&"
+        fi
+        NOIPURL="${NOIPURL}myip=$IP"
 fi
 
 
 while :
 do
-	CMD="curl --location ${USERAGENT} ${AUTHHEADER} --request GET '${NOIPURL}'"
-	if [[ "${DEBUG}" == "1" ]]; then
-		echo "${CMD}"
-	fi
+        CMD="curl --location ${USERAGENT} ${AUTHHEADER} --request GET '${NOIPURL}'"
 
-	RESULT=$(eval ${CMD})
+        if [[ "${DEBUG}" == "1" ]]; then
+                echo "${CMD}"
+        fi
 
-	if [ -z "$RESULT" ] && [ $? -ne 0 ]
-	then
-		echo "Problem updating NO-IP."
-		case $? in
-		1)
-		  RESULT="General Error."
-		  ;;
-		2)
-		  RESULT="General Error."
-		  ;;
-		3)
-		  RESULT="File I/O Error"
-		  ;;
-		4)
-		  RESULT="Network Failure"
-		  ;;
-		5)
-		  RESULT="SSL Verfication Error"
-		  ;;
-		6)
-		  RESULT="Authentication Failure"
-		  ;;
-		7)
-		  RESULT="Protocol Error"
-		  ;;
-		8)
-		  RESULT="Server issued an error response"
-		  ;;
-		esac
-	fi
+        RESULT=$(eval "${CMD}")
+        echo "$RESULT"
 
+        if [ -n "$RESULT" ] && [[ ! $(echo -ne "$RESULT" | grep "nochg") ]] && [[ ! $(echo -ne "$RESULT" | grep "good") ]]
+        then
+                echo "Problem updating NO-IP."
 
-	if  [ -n "$LOGFILE" ]
-	then
-		if [ ! -f "$LOGFILE" ]
-		then
-			touch "$LOGFILE"
-		fi
-		DATE=$(date)
-		echo "$DATE --  $RESULT" >> "$LOGFILE"
-	fi
+                LOG_MESSAGE="$(date) --  $RESULT"
+                OBJECT="$(hostname) - DDNS error"
+                MAIL="$LOG_MESSAGE\nIP: $IP"
 
-	if [ $INTERVAL -eq 0 ]
-	then
-		break
-	else
-		sleep "${INTERVAL}m"
-	fi
+                if  [ -n "$LOGFILE" ]
+                then
+                        if [ ! -f "$LOGFILE" ]
+                        then
+                                touch "$LOGFILE"
+                        fi
+                        echo "$LOG_MESSAGE" >> "$LOGFILE"
+                fi
+
+                echo -e "Subject:$OBJECT\n$MAIL" | /usr/sbin/sendmail -t "$MAIL_DEST"
+        fi
+
+        if [ "$INTERVAL" -eq 0 ]
+        then
+                break
+        else
+                sleep "${INTERVAL}m"
+        fi
 
 done
 

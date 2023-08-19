@@ -53,6 +53,10 @@ Sets the path to a log file. This file must be writable.
 
 Sets the path to a config file. This file must be readable. Config file parameters take precedence over command line parameters.
 
+    -m, --mail_dest
+
+Set the remote email address.
+
 
 
 Examples:
@@ -85,113 +89,6 @@ Example:
     password=password 
     hostname=hostname.example.com
     logfile=/var/log/no-ip.log
-    interval=10
+    interval=0
     detectip=true
-
-
-Installation:
--------------
-
-**Before installing the script, download and extract the files to your local machine. The instructions assume your are in the no-ip-master folder.**
-
-      cd ~
-      wget https://github.com/theonemule/no-ip/archive/master.zip
-      unzip master.zip
-      cd no-ip-master
-      
-
-Method 1: crontabs
-
-Crontabs allows you to specify a schedule to run the script and it will also run the script as the user the crontab is configured for. Make sure that the user has execute permissions on the script, read permissions on the config file, and write permissions to the log file. **Crontabs will run the script on a scheduled basis so there is no need to specify an interval.**
-
-Here's how to run the script as root.
-
-1.) Create a folder in etc.
-
-    sudo mkdir /etc/no-ip
-
-2.)  Create a config file.
-
-    sudo touch /etc/no-ip/no-ip.conf
-
-3.) Set the parameters with your favorite editor. I use nano.  See the Config File section above for details.
- 
-
-    sudo nano /etc/no-ip/no-ip.conf
-    
-    user=username 
-    password=password 
-    hostname=hostname.example.com
-    logfile=/var/log/no-ip.log
-    detectip=true
-
-4.) Copy no-ip.sh to /usr/sbin
-
-    sudo cp no-ip.sh /usr/sbin/no-ip.sh
-
-5.) Make the script executable
-
-    sudo chmod +x /usr/sbin/no-ip.sh
-
-6.) Logon as root
-
-    sudo -i
-
-7.) Edit root's crontab
-
-    crontab -e
-
-8.) Add the entry to the bottom. */10 tells crontab to run the script every time the current time is divisble by 10, or every 10 minutes and save the crontab.
-
-    */10 * * * * /usr/sbin/no-ip.sh
-
-
-Method 2: Linux Service (written for Debian-based distros. This will vary for other distros)
-
-Make sure root has execute permissions on the script, read permissions on the config file, and write permissions to the log file. 
-
-1.) Create a folder in /etc.
-
-    sudo mkdir /etc/no-ip
-
-2.) Create a config file.
-
-    sudo touch /etc/no-ip/no-ip.conf
-
-3.) Set the parameters with your favorite editor. I use nano.  See the Config File section above for details.
-
-    sudo nano /etc/no-ip/no-ip.conf
-    
-    user=username 
-    password=password 
-    hostname=hostname.example.com
-    logfile=/var/log/no-ip.log
-    interval=10
-    detectip=true
-
-4.) Copy no-ip.sh to /usr/sbin
-
-    sudo cp no-ip.sh /usr/sbin/no-ip.sh
-
-5.) Make the script executable
-
-    sudo chmod +x /usr/sbin/no-ip.sh
-
-6.) Copy no-ip-service to init.d
-
-    sudo cp no-ip-service /etc/init.d/no-ip-service
-
-7.) Make no-ip-service executable
-
-    sudo chmod +x /etc/init.d/no-ip-service
-
-8.) Start the service
-
-    sudo service no-ip-service start
-
-9.) Add the service to start at boot.
-
-    update-rc.d no-ip-service defaults
-
-
-
+	mail_dest=user@mail.com
